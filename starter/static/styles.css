@@ -179,6 +179,12 @@ h1 {
     color: var(--text-primary);
 }
 
+.app-header {
+    position: relative;
+    margin: 0 auto;
+    max-width: 800px;
+}
+
 .game-info {
     display: flex;
     align-items: center;
@@ -479,15 +485,19 @@ button:hover {
 }
 
 #dark-mode-toggle {
-    padding: 8px 12px;
+    position: fixed;
+    top: 8px;
+    right: 8px;
+    z-index: 900;
+    width: 36px;
+    height: 36px;
+    padding: 0;
     background: var(--timer-bg);
     color: var(--timer-text);
     border: 2px solid var(--timer-text);
-    border-radius: 8px;
-    font-size: 18px;
+    border-radius: 6px;
+    font-size: 16px;
     cursor: pointer;
-    min-width: 44px;
-    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -511,6 +521,10 @@ body[data-theme="dark"] #dark-mode-toggle:focus {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .app-header {
+        max-width: 100%;
+    }
+
     .game-info {
         gap: 20px;
     }
@@ -557,6 +571,18 @@ body[data-theme="dark"] #dark-mode-toggle:focus {
     h1 {
         margin: 15px 0 10px 0;
         font-size: 20px;
+    }
+
+    .app-header {
+        margin: 0;
+    }
+
+    #dark-mode-toggle {
+        top: 6px;
+        right: 6px;
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
     }
 
     .game-info {
