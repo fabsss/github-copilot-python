@@ -205,14 +205,15 @@ def get_hint() -> Tuple[Dict[str, Any], int]:
         500: Unexpected server error
     """
     try:
-        # Validate request has JSON body
-        if not request.json:
+        # Validate request has JSON body (use silent=True to avoid raising exceptions)
+        request_data = request.get_json(silent=True)
+        if not request_data:
             error_msg = 'Request body must be JSON with board data'
             logger.warning(error_msg)
             return jsonify({'error': error_msg}), 400
         
         # Extract and validate board data
-        user_board = request.json.get('board')
+        user_board = request_data.get('board')
         if not user_board:
             error_msg = 'Missing required field: board'
             logger.warning(error_msg)

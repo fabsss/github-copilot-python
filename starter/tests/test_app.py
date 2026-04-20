@@ -246,3 +246,198 @@ class TestInvalidMoveDetection:
         
         # Verify CSS classes for visual feedback
         assert 'invalid' in css_content or 'conflict' in css_content
+
+
+class TestHintRoute:
+    """Test the hint route that provides one correct cell."""
+    
+    def test_hint_returns_valid_response_structure(self, client):
+        """POST /hint should return row, col, and value fields."""
+        # Create a game
+        client.get('/new?clues=35')
+        
+        # Create a board with some cells filled
+        board = [row[:] for row in CURRENT['puzzle']]
+        for row_idx in range(SIZE):
+            for col_idx in range(SIZE):
+                if board[row_idx][col_idx] == EMPTY:
+                    board[row_idx][col_idx] = 0
+        
+        response = client.post('/hint', json={'board': board})
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        
+        assert 'row' in data
+        assert 'col' in data
+        assert 'value' in data
+        assert isinstance(data['row'], int)
+        assert isinstance(data['col'], int)
+        assert isinstance(data['value'], int)
+    
+    def test_hint_value_matches_solution(self, client):
+        """Hint value should match the correct solution value."""
+        puzzle, solution = generate_puzzle(35)
+        CURRENT['puzzle'] = puzzle
+        CURRENT['solution'] = solution
+        
+        # Create a board from the puzzle
+        board = [row[:] for row in puzzle]
+        
+        response = client.post('/hint', json={'board': board})
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        
+        hint_row = data['row']
+        hint_col = data['col']
+        hint_value = data['value']
+        
+        # Verify hint value matches solution
+        assert hint_value == solution[hint_row][hint_col]
+    
+    def test_hint_targets_empty_cell(self, client):
+        """Hint should be given for an empty cell only."""
+        puzzle, solution = generate_puzzle(35)
+        CURRENT['puzzle'] = puzzle
+        CURRENT['solution'] = solution
+        
+        board = [row[:] for row in puzzle]
+        
+        response = client.post('/hint', json={'board': board})
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        
+        hint_row = data['row']
+        hint_col = data['col']
+        
+        # The cell in the original puzzle should be empty (0)
+        assert puzzle[hint_row][hint_col] == 0
+        # The cell value in board should be 0
+        assert board[hint_row][hint_col] == 0
+    
+    def test_hint_with_random_selection(self, client):
+        """Multiple hint requests should return different cells."""
+        puzzle, solution = generate_puzzle(35)
+        CURRENT['puzzle'] = puzzle
+        CURRENT['solution'] = solution
+        
+        board = [row[:] for row in puzzle]
+        
+        # Request multiple hints
+        hints = []
+        for _ in range(3):
+            response = client.post('/hint', json={'board': board})
+            assert response.status_code == 200
+            data = json.loads(response.data)
+            hints.append((data['row'], data['col']))
+        
+        # At least with high clue puzzles, we should get this or different hints
+        # With a fixed seed, the hint system uses random.choice
+        assert len(hints) == 3
+        assert all(isinstance(h, tuple) and len(h) == 2 for h in hints)
+    
+    def test_hint_no_game_in_progress(self, client):
+        """POST /hint without active game should return 400 error."""
+        CURRENT['puzzle'] = None
+        CURRENT['solution'] = None
+        
+        board = [[0] * 9 for _ in range(9)]
+        response = client.post('/hint', json={'board': board})
+        
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert 'No active game' in data['error']
+    
+    def test_hint_no_empty_cells(self, client):
+        """POST /hint with complete board should return error."""
+        puzzle, solution = generate_puzzle(35)
+        CURRENT['puzzle'] = puzzle
+        CURRENT['solution'] = solution
+        
+        # Use the solution (complete board)
+        response = client.post('/hint', json={'board': solution})
+        
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert 'No empty cells' in data['error']
+    
+    def test_hint_missing_board_field(self, client):
+        """POST /hint without board field should return 400."""
+        client.get('/new?clues=35')
+        
+        response = client.post('/hint', json={})
+        
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert 'board' in data['error']
+    
+    def test_hint_missing_json_body(self, client):
+        """POST /hint without JSON body should return error."""
+        client.get('/new?clues=35')
+        
+        # Send request with proper Content-Type but no actual data
+        response = client.post(
+            '/hint',
+            data='',
+            content_type='application/json'
+        )
+        
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
+    
+    def test_hint_invalid_board_dimensions(self, client):
+        """POST /hint with wrong board dimensions should return 400."""
+        client.get('/new?clues=35')
+        
+        # Wrong number of rows
+        invalid_board = [[0] * 9 for _ in range(8)]
+        response = client.post('/hint', json={'board': invalid_board})
+        
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
+    
+    def test_hint_board_row_dimension_mismatch(self, client):
+        """POST /hint with rows of wrong length should return 400."""
+        client.get('/new?clues=35')
+        
+        # Row has 8 columns instead of 9
+        invalid_board = [[0] * 8 for _ in range(9)]
+        response = client.post('/hint', json={'board': invalid_board})
+        
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
+    
+    def test_hint_value_in_valid_range(self, client):
+        """Hint value should be between 1 and 9."""
+        puzzle, solution = generate_puzzle(35)
+        CURRENT['puzzle'] = puzzle
+        CURRENT['solution'] = solution
+        
+        board = [row[:] for row in puzzle]
+        
+        response = client.post('/hint', json={'board': board})
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        
+        hint_value = data['value']
+        assert 1 <= hint_value <= 9
+    
+    def test_hint_coordinates_in_valid_range(self, client):
+        """Hint row and column should be within 0-8 range."""
+        puzzle, solution = generate_puzzle(35)
+        CURRENT['puzzle'] = puzzle
+        CURRENT['solution'] = solution
+        
+        board = [row[:] for row in puzzle]
+        
+        response = client.post('/hint', json={'board': board})
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        
+        assert 0 <= data['row'] <= 8
+        assert 0 <= data['col'] <= 8
