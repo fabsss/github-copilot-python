@@ -16,6 +16,67 @@ let elapsedSeconds = 0;
 let hintsUsed = 0;
 let currentDifficulty = 'medium';
 const TOP_10_SCORES_KEY = 'sudoku_top_10_scores';
+const DARK_MODE_KEY = 'sudoku_dark_mode';
+
+/**
+ * Initialize dark mode by loading saved preference.
+ * Called on page load to apply theme.
+ */
+function initializeDarkMode() {
+  try {
+    const savedDarkMode = localStorage.getItem(DARK_MODE_KEY);
+    const isDarkMode = savedDarkMode === 'true';
+    applyDarkMode(isDarkMode);
+  } catch (e) {
+    // localStorage might not be available, default to light mode
+    applyDarkMode(false);
+  }
+}
+
+/**
+ * Apply dark mode to the document.
+ * 
+ * Args:
+ *     isDarkMode: Boolean indicating if dark mode should be active.
+ */
+function applyDarkMode(isDarkMode) {
+  if (isDarkMode) {
+    document.body.setAttribute('data-theme', 'dark');
+  } else {
+    document.body.removeAttribute('data-theme');
+  }
+  updateDarkModeButtonIcon(isDarkMode);
+}
+
+/**
+ * Toggle dark mode on and off, saving preference to localStorage.
+ */
+function toggleDarkMode() {
+  try {
+    const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+    const newMode = !isDarkMode;
+    applyDarkMode(newMode);
+    localStorage.setItem(DARK_MODE_KEY, newMode ? 'true' : 'false');
+  } catch (e) {
+    // If localStorage fails, still toggle the theme visually
+    const isDarkMode = document.body.getAttribute('data-theme') === 'dark';
+    applyDarkMode(!isDarkMode);
+  }
+}
+
+/**
+ * Update the dark mode button icon based on current theme.
+ * 
+ * Args:
+ *     isDarkMode: Boolean indicating if dark mode is active.
+ */
+function updateDarkModeButtonIcon(isDarkMode) {
+  const btn = document.getElementById('dark-mode-toggle');
+  if (btn) {
+    btn.textContent = isDarkMode ? '☀️' : '🌙';
+    btn.setAttribute('aria-label', isDarkMode ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+}
 
 /**
  * Get the numeric rank value for difficulty level.
@@ -591,6 +652,15 @@ function escapeHtml(text) {
 
 // Wire buttons
 window.addEventListener('load', () => {
+  // Initialize dark mode
+  initializeDarkMode();
+  
+  // Setup dark mode toggle button
+  const darkModeBtn = document.getElementById('dark-mode-toggle');
+  if (darkModeBtn) {
+    darkModeBtn.addEventListener('click', toggleDarkMode);
+  }
+  
   document.getElementById('new-game').addEventListener('click', newGame);
   document.getElementById('hint').addEventListener('click', getHint);
   document.getElementById('check-solution').addEventListener('click', checkSolution);
@@ -604,6 +674,6 @@ window.addEventListener('load', () => {
   // Display Top 10 scores
   displayTopScores();
   
-  // Initialize
+  // Initialize game
   newGame();
 });
