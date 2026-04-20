@@ -1,14 +1,122 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
     font-family: Arial, sans-serif;
     background: #f4f4f4;
     text-align: center;
     margin: 0;
     padding: 0;
+    position: relative;
+}
+
+/* Loading overlay */
+.loading-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.loading-content {
+    background: white;
+    padding: 40px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #1976d2;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#loading-text {
+    color: #333;
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Message container */
+#message-container {
+    margin: 16px auto;
+    max-width: 600px;
+}
+
+.message {
+    padding: 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.6;
+    display: block;
+}
+
+.message-error {
+    background-color: #ffebee;
+    color: #c62828;
+    border-left: 4px solid #c62828;
+}
+
+.message-success {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+    border-left: 4px solid #2e7d32;
 }
 
 h1 {
     margin-top: 30px;
     color: #333;
+}
+
+.difficulty-selector {
+    margin: 20px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.difficulty-selector label {
+    font-weight: bold;
+    color: #333;
+}
+
+.difficulty-selector select {
+    padding: 8px 12px;
+    font-size: 16px;
+    border: 2px solid #1976d2;
+    background: #fff;
+    color: #333;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.difficulty-selector select:focus {
+    outline: none;
+    border-color: #1565c0;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.difficulty-selector select:hover {
+    border-color: #1565c0;
 }
 
 #sudoku-board {
@@ -78,8 +186,36 @@ button:hover {
     background: #1565c0;
 }
 
-#message {
-    margin-left: 20px;
+.difficulty-selector {
+    margin: 20px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.difficulty-selector label {
+    font-weight: bold;
+    color: #333;
+}
+
+.difficulty-selector select {
+    padding: 8px 12px;
     font-size: 16px;
-    color: #d32f2f;
+    border: 2px solid #1976d2;
+    background: #fff;
+    color: #333;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.difficulty-selector select:focus {
+    outline: none;
+    border-color: #1565c0;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+.difficulty-selector select:hover {
+    border-color: #1565c0;
 }

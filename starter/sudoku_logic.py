@@ -107,6 +107,7 @@ def generate_puzzle(clues=35, max_attempts=100, timeout_seconds=5):
         clues (int): Target number of pre-filled cells. Defaults to 35.
         max_attempts (int): Maximum attempts to generate a valid puzzle. Defaults to 100.
         timeout_seconds (int): Maximum time in seconds to generate a puzzle. Defaults to 5.
+                               Hard difficulty (25 clues) needs longer timeout.
         
     Returns:
         tuple: (puzzle, solution) - both are 9x9 boards, puzzle guaranteed to have unique solution
@@ -114,6 +115,12 @@ def generate_puzzle(clues=35, max_attempts=100, timeout_seconds=5):
     Raises:
         TimeoutError: If unable to generate a puzzle with unique solution within timeout_seconds
     """
+    # Increase timeout for harder difficulties (fewer clues = harder = longer generation)
+    if clues <= 25:
+        timeout_seconds = 15  # Hard difficulty
+    elif clues <= 30:
+        timeout_seconds = 10  # Medium-hard
+    
     start_time = time.time()
     
     def time_remaining():

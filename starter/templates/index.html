@@ -6,12 +6,28 @@
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p id="loading-text">Generating puzzle...</p>
+    </div>
+  </div>
+
   <h1>Sudoku Game</h1>
+  <div class="difficulty-selector">
+    <label for="difficulty">Difficulty:</label>
+    <select id="difficulty">
+      <option value="easy">Easy</option>
+      <option value="medium" selected>Medium</option>
+      <option value="hard">Hard</option>
+    </select>
+  </div>
+  <div id="message-container"></div>
   <div id="sudoku-board"></div>
   <div class="controls">
     <button id="new-game">New Game</button>
     <button id="check-solution">Check Solution</button>
-    <span id="message"></span>
   </div>
   <script src="/static/main.js"></script>
 </body>
