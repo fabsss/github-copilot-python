@@ -42,9 +42,30 @@ python app.py
 
 7. Open http://127.0.0.1:5000 in your browser.
 
+## Features
+
+### Real-Time Invalid Move Detection
+The game provides immediate visual feedback when users enter numbers that violate Sudoku rules.
+
+**How it works:**
+- As you type a number in a cell, the game checks if it conflicts with existing entries
+- **Invalid cells** (cells with conflicting values) are highlighted with an **orange background**
+- **Conflicting cells** (cells that already contain the entered number) are marked with an **orange border**
+- The validation checks all three constraints:
+  - **Row conflicts**: Same number in the same row
+  - **Column conflicts**: Same number in the same column
+  - **Sector conflicts**: Same number in the same 3×3 sector
+- Visual feedback is cleared when the conflict is resolved
+
+**Technical Implementation:**
+- Client-side validation in [main.js](starter/static/main.js) for instant feedback
+- Functions: `getSectorRow()`, `getSectorCol()`, `findConflictingCells()`, `validateCellEntry()`
+- CSS classes: `.invalid` (orange background), `.conflict` (orange border)
+- No server roundtrip needed - provides seamless, responsive user experience
+
 ## Testing
 
-This project includes a comprehensive test suite using **pytest** to ensure code quality and functionality.
+This project includes a comprehensive test suite using **pytest** and browser-based unit tests to ensure code quality and functionality.
 
 ### Running Tests
 
@@ -56,6 +77,21 @@ pytest -v               # Run with verbose output
 pytest -v tests/test_app.py     # Run specific test file
 pytest -v tests/test_sudoku_logic.py::TestIsValidMove  # Run specific test class
 ```
+
+### Browser-Based Tests
+
+Open the invalid move detection test suite in your browser:
+
+```bash
+# Open in browser
+starter/tests/test_invalid_move_detection.html
+```
+
+This HTML test file contains **27 unit tests** for the real-time validation logic, including:
+- Sector row/column calculation tests
+- Row, column, and sector conflict detection tests
+- Edge cases and deduplication tests
+- All tests execute in the browser console
 
 ### Test Coverage
 
@@ -75,9 +111,15 @@ Tests are organized in `starter/tests/`:
 
 ```
 tests/
-├── __init__.py                    # Test package marker
-├── test_app.py                   # Flask route and endpoint tests (8 tests)
-├── test_sudoku_logic.py          # Game logic unit tests (15 tests)
+├── __init__.py                           # Test package marker
+├── test_app.py                          # Flask route and endpoint tests (40 tests)
+│   ├── TestIndexRoute                   # Index page tests
+│   ├── TestNewGameRoute                 # Puzzle generation tests
+│   ├── TestCheckSolutionRoute           # Solution checking tests
+│   ├── TestNewGameErrorHandling         # Error handling tests
+│   └── TestInvalidMoveDetection         # Invalid move detection integration tests (5 tests)
+├── test_sudoku_logic.py                 # Game logic unit tests (35 tests)
+└── test_invalid_move_detection.html     # Browser-based unit tests (27 tests)
 ```
 
 ### What's Tested
@@ -92,6 +134,12 @@ tests/
 - `GET /` - Index page rendering
 - `GET /new` - Puzzle generation with custom difficulty
 - `POST /check` - Solution checking and feedback
+- Error handling for invalid requests
+
+**Invalid Move Detection (Client-Side):**
+- Conflict detection in rows, columns, and sectors
+- Visual feedback application and cleanup
+- Edge cases (empty values, empty board, deduplication)
 
 Tests cover both happy paths and edge cases per project guidelines.
 
