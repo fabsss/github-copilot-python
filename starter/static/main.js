@@ -262,6 +262,49 @@ async function checkSolution() {
   }
 }
 
+async function getHint() {
+  try {
+    const boardDiv = document.getElementById('sudoku-board');
+    const inputs = boardDiv.getElementsByTagName('input');
+    const board = [];
+    for (let i = 0; i < SIZE; i++) {
+      board[i] = [];
+      for (let j = 0; j < SIZE; j++) {
+        const idx = i * SIZE + j;
+        const val = inputs[idx].value;
+        board[i][j] = val ? parseInt(val, 10) : 0;
+      }
+    }
+    const response = await fetch('/hint', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({board})
+    });
+    const data = await response.json();
+    
+    if (!response.ok || data.error) {
+      showErrorMessage(data.error || 'Error getting hint');
+      return;
+    }
+    
+    // Fill the hint cell and lock it
+    const hintRow = data.row;
+    const hintCol = data.col;
+    const hintValue = data.value;
+    const idx = hintRow * SIZE + hintCol;
+    const cellInput = inputs[idx];
+    
+    cellInput.value = hintValue;
+    cellInput.disabled = true;
+    cellInput.className = 'sudoku-cell hint';
+    
+    showSuccessMessage('💡 Hint provided! Cell filled with the correct value.');
+  } catch (error) {
+    showErrorMessage(`Error: ${error.message}`);
+    console.error('Get hint error:', error);
+  }
+}
+
 function showLoadingOverlay(show) {
   const overlay = document.getElementById('loading-overlay');
   if (overlay) {
@@ -307,6 +350,7 @@ function escapeHtml(text) {
 // Wire buttons
 window.addEventListener('load', () => {
   document.getElementById('new-game').addEventListener('click', newGame);
+  document.getElementById('hint').addEventListener('click', getHint);
   document.getElementById('check-solution').addEventListener('click', checkSolution);
   
   // Handle difficulty selector changes

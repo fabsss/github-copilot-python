@@ -186,6 +186,90 @@ def check_solution() -> Tuple[Dict[str, Any], int]:
         )
         return jsonify({'error': error_msg}), 500
 
+@app.route('/hint', methods=['POST'])
+def get_hint() -> Tuple[Dict[str, Any], int]:
+    """Provide a hint by returning an empty cell and its correct value.
+    
+    Request Body (JSON):
+        board: 9x9 grid with current user entries (0 for empty cells)
+    
+    Returns:
+        JSON response with:
+        - row: Row index of the hinted cell
+        - col: Column index of the hinted cell
+        - value: The correct number to fill in
+        - error: Error message if no hints available
+        
+    Raises:
+        400: No active game or board has no empty cells
+        500: Unexpected server error
+    """
+    try:
+        # Validate request has JSON body
+        if not request.json:
+            error_msg = 'Request body must be JSON with board data'
+            logger.warning(error_msg)
+            return jsonify({'error': error_msg}), 400
+        
+        # Extract and validate board data
+        user_board = request.json.get('board')
+        if not user_board:
+            error_msg = 'Missing required field: board'
+            logger.warning(error_msg)
+            return jsonify({'error': error_msg}), 400
+        
+        # Check if solution exists (game in progress)
+        solution = CURRENT.get('solution')
+        if solution is None:
+            error_msg = 'No active game. Start a new game first.'
+            logger.warning(error_msg)
+            return jsonify({'error': error_msg}), 400
+        
+        # Validate board dimensions
+        if (not isinstance(user_board, list) or 
+            len(user_board) != sudoku_logic.SIZE or
+            not all(len(row) == sudoku_logic.SIZE for row in user_board)):
+            error_msg = f'Board must be {sudoku_logic.SIZE}x{sudoku_logic.SIZE}'
+            logger.warning(error_msg)
+            return jsonify({'error': error_msg}), 400
+        
+        # Find all empty cells
+        empty_cells: List[Tuple[int, int]] = []
+        for row_idx in range(sudoku_logic.SIZE):
+            for col_idx in range(sudoku_logic.SIZE):
+                if user_board[row_idx][col_idx] == 0:
+                    empty_cells.append((row_idx, col_idx))
+        
+        # Check if there are any empty cells
+        if not empty_cells:
+            error_msg = 'No empty cells available. Board is complete!'
+            logger.info(error_msg)
+            return jsonify({'error': error_msg}), 400
+        
+        # Select a random empty cell
+        import random
+        hint_row, hint_col = random.choice(empty_cells)
+        hint_value = solution[hint_row][hint_col]
+        
+        logger.info(
+            f'Hint provided: row={hint_row}, col={hint_col}, '
+            f'value={hint_value}'
+        )
+        
+        return jsonify({
+            'row': hint_row,
+            'col': hint_col,
+            'value': hint_value
+        }), 200
+    
+    except Exception as unexpected_error:
+        error_msg = 'Error getting hint. Please try again.'
+        logger.error(
+            f'Unexpected error during hint: {str(unexpected_error)}',
+            exc_info=True
+        )
+        return jsonify({'error': error_msg}), 500
+
 
 if __name__ == '__main__':
     """Run the Flask development server.
