@@ -42,6 +42,59 @@ python app.py
 
 7. Open http://127.0.0.1:5000 in your browser.
 
+## Testing
+
+This project includes a comprehensive test suite using **pytest** to ensure code quality and functionality.
+
+### Running Tests
+
+Run all tests from the `starter` directory:
+
+```bash
+pytest                    # Run all tests
+pytest -v               # Run with verbose output
+pytest -v tests/test_app.py     # Run specific test file
+pytest -v tests/test_sudoku_logic.py::TestIsValidMove  # Run specific test class
+```
+
+### Test Coverage
+
+View code coverage with:
+
+```bash
+pytest --cov=app --cov=sudoku_logic --cov-report=term-missing
+```
+
+Current coverage: **98%**
+- `app.py`: 97% (Flask routes and application logic)
+- `sudoku_logic.py`: 98% (Sudoku game logic and utilities)
+
+### Test Structure
+
+Tests are organized in `starter/tests/`:
+
+```
+tests/
+├── __init__.py                    # Test package marker
+├── test_app.py                   # Flask route and endpoint tests (8 tests)
+├── test_sudoku_logic.py          # Game logic unit tests (15 tests)
+```
+
+### What's Tested
+
+**Sudoku Logic:**
+- `is_valid_move()` - Validates moves against Sudoku rules
+- `solve_sudoku()` - Puzzle solving with backtracking
+- `check_sudoku_solution()` - Solution verification
+- `generate_puzzle()` - Puzzle generation and structure
+
+**Flask Routes:**
+- `GET /` - Index page rendering
+- `GET /new` - Puzzle generation with custom difficulty
+- `POST /check` - Solution checking and feedback
+
+Tests cover both happy paths and edge cases per project guidelines.
+
 ## Project Instructions
 
 Use GitHub Copilot to refactor the code for this game to add more advanced features. The goal is to create a more modern and maintainable codebase and add additional functionality to the final product. You can use any combination of code completion and chat features, like Ask, Edit, or Agent modes.
