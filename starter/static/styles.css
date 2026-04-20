@@ -165,14 +165,29 @@ h1 {
     transition: background 0.2s;
 }
 
+.sudoku-cell.block-even {
+    background: #e8e8e8;
+}
+
+.sudoku-cell.block-odd {
+    background: #d4e7f5;
+}
+
 .sudoku-cell:focus {
     background: #e0f7fa;
 }
 
 .sudoku-cell.prefilled {
-    background: #e0e0e0;
     font-weight: bold;
     color: #333;
+}
+
+.sudoku-cell.prefilled.block-even {
+    background: #d0d0d0;
+}
+
+.sudoku-cell.prefilled.block-odd {
+    background: #b8d7e8;
 }
 
 .sudoku-cell.hint {

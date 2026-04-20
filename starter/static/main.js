@@ -309,7 +309,10 @@ function createBoardElement() {
       const input = document.createElement('input');
       input.type = 'text';
       input.maxLength = 1;
-      input.className = 'sudoku-cell';
+      const blockRow = Math.floor(i / SECTOR_SIZE);
+      const blockCol = Math.floor(j / SECTOR_SIZE);
+      const blockParity = (blockRow + blockCol) % 2 === 0 ? 'block-even' : 'block-odd';
+      input.className = `sudoku-cell ${blockParity}`;
       input.dataset.row = i;
       input.dataset.col = j;
       input.addEventListener('input', (e) => {
@@ -337,14 +340,17 @@ function renderPuzzle(puz) {
       const idx = i * SIZE + j;
       const val = puzzle[i][j];
       const inp = inputs[idx];
+      const blockRow = Math.floor(i / SECTOR_SIZE);
+      const blockCol = Math.floor(j / SECTOR_SIZE);
+      const blockParity = (blockRow + blockCol) % 2 === 0 ? 'block-even' : 'block-odd';
       if (val !== 0) {
         inp.value = val;
         inp.disabled = true;
-        inp.className = 'sudoku-cell prefilled';
+        inp.className = `sudoku-cell prefilled ${blockParity}`;
       } else {
         inp.value = '';
         inp.disabled = false;
-        inp.className = 'sudoku-cell';
+        inp.className = `sudoku-cell ${blockParity}`;
       }
     }
   }
