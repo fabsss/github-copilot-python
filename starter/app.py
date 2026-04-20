@@ -15,11 +15,18 @@ def index():
 
 @app.route('/new')
 def new_game():
-    clues = int(request.args.get('clues', 35))
-    puzzle, solution = sudoku_logic.generate_puzzle(clues)
-    CURRENT['puzzle'] = puzzle
-    CURRENT['solution'] = solution
-    return jsonify({'puzzle': puzzle})
+    try:
+        clues = int(request.args.get('clues', 35))
+        puzzle, solution = sudoku_logic.generate_puzzle(clues)
+        CURRENT['puzzle'] = puzzle
+        CURRENT['solution'] = solution
+        return jsonify({'puzzle': puzzle})
+    except TimeoutError as e:
+        return jsonify({'error': str(e)}), 408
+    except ValueError:
+        return jsonify({'error': 'Invalid clues parameter. Must be an integer.'}), 400
+    except Exception as e:
+        return jsonify({'error': 'Failed to generate puzzle. Please try again.'}), 500
 
 @app.route('/check', methods=['POST'])
 def check_solution():

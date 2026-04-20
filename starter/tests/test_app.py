@@ -2,6 +2,7 @@ import pytest
 import json
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -105,3 +106,31 @@ class TestCheckSolutionRoute:
         data = json.loads(response.data)
         assert 'incorrect' in data
         assert data['incorrect'] == []
+
+
+class TestNewGameErrorHandling:
+    """Test error handling in new game route."""
+    
+    def test_new_game_invalid_clues_parameter(self, client):
+        """GET /new with non-integer clues should return 400."""
+        response = client.get('/new?clues=invalid')
+        assert response.status_code == 400
+        data = json.loads(response.data)
+        assert 'error' in data
+        assert 'Invalid clues parameter' in data['error']
+    
+    def test_new_game_timeout_error(self, client):
+        """GET /new should return 408 if generation times out."""
+        with patch('sudoku_logic.generate_puzzle', side_effect=TimeoutError('timeout')):
+            response = client.get('/new')
+            assert response.status_code == 408
+            data = json.loads(response.data)
+            assert 'error' in data
+    
+    def test_new_game_generic_error(self, client):
+        """GET /new should return 500 for unexpected errors."""
+        with patch('sudoku_logic.generate_puzzle', side_effect=Exception('unexpected error')):
+            response = client.get('/new')
+            assert response.status_code == 500
+            data = json.loads(response.data)
+            assert 'error' in data

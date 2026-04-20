@@ -1,5 +1,6 @@
 import copy
 import random
+import time
 
 SIZE = 9
 EMPTY = 0
@@ -48,22 +49,143 @@ def remove_cells(board, clues):
             board[row][col] = EMPTY
             attempts -= 1
 
-def generate_puzzle(clues=35):
+
+def count_solutions(board, limit=2):
     """
-    Generate a Sudoku puzzle with a unique solution.
+    Count the number of solutions for a Sudoku puzzle.
     
     Args:
-        clues (int): Number of pre-filled cells. Defaults to 35.
+        board (list): 9x9 Sudoku board with 0s for empty cells
+        limit (int): Stop counting after reaching this limit (for efficiency)
         
     Returns:
-        tuple: (puzzle, solution) - both are 9x9 boards
+        int: Number of solutions found (up to limit)
     """
-    board = create_empty_board()
-    fill_board(board)
-    solution = deep_copy(board)
-    remove_cells(board, clues)
-    puzzle = deep_copy(board)
-    return puzzle, solution
+    if not board or len(board) != SIZE or not all(len(row) == SIZE for row in board):
+        return 0
+    
+    board_copy = deep_copy(board)
+    count = [0]  # Use list to allow modification in nested function
+    
+    def backtrack():
+        if count[0] >= limit:
+            return  # Stop if we've found enough solutions
+        
+        for row in range(SIZE):
+            for col in range(SIZE):
+                if board_copy[row][col] == EMPTY:
+                    for num in range(1, SIZE + 1):
+                        if is_safe(board_copy, row, col, num):
+                            board_copy[row][col] = num
+                            backtrack()
+                            board_copy[row][col] = EMPTY
+                    return
+        count[0] += 1
+    
+    backtrack()
+    return count[0]
+
+
+def has_unique_solution(puzzle):
+    """
+    Check if a puzzle has exactly one unique solution.
+    
+    Args:
+        puzzle (list): 9x9 Sudoku puzzle with 0s for empty cells
+        
+    Returns:
+        bool: True if puzzle has exactly one solution, False otherwise
+    """
+    return count_solutions(puzzle, limit=2) == 1
+
+
+def generate_puzzle(clues=35, max_attempts=100, timeout_seconds=5):
+    """
+    Generate a Sudoku puzzle with guaranteed unique solution.
+    
+    Args:
+        clues (int): Target number of pre-filled cells. Defaults to 35.
+        max_attempts (int): Maximum attempts to generate a valid puzzle. Defaults to 100.
+        timeout_seconds (int): Maximum time in seconds to generate a puzzle. Defaults to 5.
+        
+    Returns:
+        tuple: (puzzle, solution) - both are 9x9 boards, puzzle guaranteed to have unique solution
+        
+    Raises:
+        TimeoutError: If unable to generate a puzzle with unique solution within timeout_seconds
+    """
+    start_time = time.time()
+    
+    def time_remaining():
+        elapsed = time.time() - start_time
+        return timeout_seconds - elapsed
+    
+    for attempt in range(max_attempts):
+        if time_remaining() <= 0:
+            raise TimeoutError(
+                f"Could not generate a puzzle with unique solution within {timeout_seconds} seconds. "
+                "Please try again by clicking 'New Game'."
+            )
+        
+        board = create_empty_board()
+        fill_board(board)
+        solution = deep_copy(board)
+        
+        # Remove cells one by one, maintaining a solvable puzzle with unique solution
+        cells_to_remove = SIZE * SIZE - clues
+        removed = 0
+        attempts = 0
+        max_remove_attempts = SIZE * SIZE * 2
+        
+        while removed < cells_to_remove and attempts < max_remove_attempts:
+            if time_remaining() <= 0:
+                raise TimeoutError(
+                    f"Could not generate a puzzle with unique solution within {timeout_seconds} seconds. "
+                    "Please try again by clicking 'New Game'."
+                )
+            
+            row = random.randrange(SIZE)
+            col = random.randrange(SIZE)
+            attempts += 1
+            
+            if board[row][col] != EMPTY:
+                # Try removing this cell
+                value = board[row][col]
+                board[row][col] = EMPTY
+                
+                # Check if puzzle still has unique solution
+                if has_unique_solution(board):
+                    removed += 1
+                    attempts = 0  # Reset attempts counter on successful removal
+                else:
+                    # Put the value back if it violates uniqueness
+                    board[row][col] = value
+        
+        # If we successfully removed enough cells, return the puzzle
+        if removed >= clues * 0.9:  # Allow 90% of target clues
+            puzzle = deep_copy(board)
+            return puzzle, solution
+    
+    # Fallback: guarantee uniqueness with timeout
+    # Keep generating and validating until we get a unique solution or timeout
+    while time_remaining() > 0:
+        board = create_empty_board()
+        fill_board(board)
+        solution = deep_copy(board)
+        remove_cells(board, clues)
+        puzzle = deep_copy(board)
+        
+        # MUST validate uniqueness - never skip this
+        if has_unique_solution(puzzle):
+            return puzzle, solution
+        
+        # If not unique, try again (loop will continue or timeout)
+    
+    # Timeout exceeded - raise error
+    raise TimeoutError(
+        f"Could not generate a puzzle with unique solution within {timeout_seconds} seconds. "
+        "Please try again by clicking 'New Game'."
+    )
 
 
 def is_valid_move(num, row, col, board=None):
