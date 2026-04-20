@@ -223,3 +223,207 @@ button {
 button:hover {
     background: #1565c0;
 }
+
+/* Top 10 Scores Section */
+.top-scores-section {
+    margin: 40px auto;
+    padding: 20px;
+    max-width: 800px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.top-scores-section h2 {
+    color: #333;
+    margin-top: 0;
+}
+
+.scores-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+}
+
+.scores-table thead {
+    background: #e3f2fd;
+    color: #0d47a1;
+}
+
+.scores-table th {
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: bold;
+    font-size: 18px;
+    color: #0d47a1;
+}
+
+.scores-table td {
+    padding: 12px 8px;
+    border-bottom: 1px solid #e0e0e0;
+    text-align: left;
+    color: #0d47a1;
+    background: #f0f0f0;
+}
+
+.scores-table tbody tr:hover {
+    background: #e8e8e8;
+}
+
+.scores-table tr:nth-child(1) {
+    background: #f0f0f0;
+}
+
+.scores-table tr:nth-child(2) {
+    background: #f0f0f0;
+}
+
+.scores-table tr:nth-child(3) {
+    background: #f0f0f0;
+}
+
+.rank {
+    font-weight: bold;
+    color: #0d47a1;
+    width: 50px;
+}
+
+.difficulty-easy {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: normal;
+    color: #2e7d32;
+    background: none;
+}
+
+.difficulty-medium {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: normal;
+    color: #ff8f00;
+    background: none;
+}
+
+.difficulty-hard {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: normal;
+    color: #d32f2f;
+    background: none;
+}
+
+.no-scores {
+    color: #999;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Score Save Prompt */
+.score-save-prompt {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+#player-name {
+    padding: 8px 12px;
+    font-size: 16px;
+    border: 2px solid #1976d2;
+    border-radius: 4px;
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+#player-name:focus {
+    outline: none;
+    border-color: #1565c0;
+    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+}
+
+#save-score-btn {
+    background: #4caf50;
+    padding: 8px 16px;
+}
+
+#save-score-btn:hover {
+    background: #45a049;
+}
+
+#skip-save-btn {
+    background: #999;
+    padding: 8px 16px;
+}
+
+#skip-save-btn:hover {
+    background: #888;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .game-info {
+        gap: 20px;
+    }
+    
+    .sudoku-cell {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+    }
+    
+    .timer-display {
+        font-size: 20px;
+        min-width: 90px;
+    }
+    
+    .top-scores-section {
+        margin: 20px 10px;
+        padding: 16px;
+    }
+    
+    .scores-table th,
+    .scores-table td {
+        padding: 8px 4px;
+        font-size: 13px;
+    }
+    
+    .score-save-prompt {
+        flex-direction: column;
+    }
+    
+    #player-name {
+        min-width: 150px;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .sudoku-cell {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+    
+    .timer-display {
+        font-size: 18px;
+        min-width: 80px;
+    }
+    
+    button {
+        padding: 6px 12px;
+        margin: 4px;
+        font-size: 14px;
+    }
+    
+    .scores-table th,
+    .scores-table td {
+        padding: 6px 2px;
+        font-size: 12px;
+    }
+}

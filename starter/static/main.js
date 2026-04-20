@@ -12,6 +12,124 @@ const DIFFICULTY_CLUES = {
 let timerInterval = null;
 let elapsedSeconds = 0;
 
+// Game state
+let hintsUsed = 0;
+let currentDifficulty = 'medium';
+const TOP_10_SCORES_KEY = 'sudoku_top_10_scores';
+
+/**
+ * Get the numeric rank value for difficulty level.
+ * 
+ * Args:
+ *     difficulty: The difficulty level ('easy', 'medium', or 'hard').
+ * 
+ * Returns:
+ *     3 for hard, 2 for medium, 1 for easy.
+ */
+function getDifficultyRank(difficulty) {
+  const ranks = { hard: 3, medium: 2, easy: 1 };
+  return ranks[difficulty] || 1;
+}
+
+/**
+ * Compare two scores for ranking purposes.
+ * Higher is better (hard > medium > easy, then lower time, then lower hints).
+ * 
+ * Args:
+ *     scoreA: First score object {name, time, difficulty, hints}.
+ *     scoreB: Second score object {name, time, difficulty, hints}.
+ * 
+ * Returns:
+ *     Positive if scoreA ranks higher, negative if scoreB ranks higher, 0 if equal.
+ */
+function compareScores(scoreA, scoreB) {
+  const rankA = getDifficultyRank(scoreA.difficulty);
+  const rankB = getDifficultyRank(scoreB.difficulty);
+  
+  if (rankA !== rankB) {
+    return rankB - rankA;  // Higher difficulty rank is better
+  }
+  if (scoreA.time !== scoreB.time) {
+    return scoreA.time - scoreB.time;  // Lower time is better
+  }
+  return scoreA.hints - scoreB.hints;  // Lower hints is better
+}
+
+/**
+ * Save a game score to the Top 10 list in local storage.
+ * 
+ * Args:
+ *     name: Player name.
+ *     time: Time in seconds.
+ *     difficulty: Difficulty level ('easy', 'medium', or 'hard').
+ *     hints: Number of hints used.
+ * 
+ * Returns:
+ *     The rank (1-10) achieved, or -1 if not in top 10.
+ */
+function saveScore(name, time, difficulty, hints) {
+  let scores = loadScores();
+  
+  const newScore = { name, time, difficulty, hints };
+  scores.push(newScore);
+  
+  // Sort by ranking criteria
+  scores.sort(compareScores);
+  
+  // Keep only top 10
+  scores = scores.slice(0, 10);
+  
+  // Save to local storage
+  localStorage.setItem(TOP_10_SCORES_KEY, JSON.stringify(scores));
+  
+  // Return rank achievement, or -1 if not top 10
+  const rank = scores.findIndex(s => s.name === name && s.time === time && s.difficulty === difficulty && s.hints === hints);
+  return rank >= 0 ? rank + 1 : -1;
+}
+
+/**
+ * Load all scores from local storage.
+ * 
+ * Returns:
+ *     Array of score objects, or empty array if none saved.
+ */
+function loadScores() {
+  const stored = localStorage.getItem(TOP_10_SCORES_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+
+/**
+ * Display the Top 10 scores list.
+ */
+function displayTopScores() {
+  const scores = loadScores();
+  const scoresContainer = document.getElementById('top-scores-list');
+  if (!scoresContainer) return;
+  
+  if (scores.length === 0) {
+    scoresContainer.innerHTML = '<p class="no-scores">No scores saved yet. Play a game to get started!</p>';
+    return;
+  }
+  
+  let html = '<table class="scores-table"><thead><tr><th>Rank</th><th>Name</th><th>Time</th><th>Difficulty</th><th>Hints</th></tr></thead><tbody>';
+  
+  scores.forEach((score, idx) => {
+    const difficultyClass = `difficulty-${score.difficulty}`;
+    html += `
+      <tr>
+        <td class="rank">${idx + 1}</td>
+        <td class="name">${escapeHtml(score.name)}</td>
+        <td class="time">${formatTime(score.time)}</td>
+        <td class="difficulty ${difficultyClass}">${score.difficulty.toUpperCase()}</td>
+        <td class="hints">${score.hints}</td>
+      </tr>
+    `;
+  });
+  
+  html += '</tbody></table>';
+  scoresContainer.innerHTML = html;
+}
+
 /**
  * Format elapsed seconds into MM:SS format.
  * 
@@ -235,6 +353,8 @@ function renderPuzzle(puz) {
 async function newGame() {
   try {
     const difficulty = document.getElementById('difficulty')?.value || 'medium';
+    currentDifficulty = difficulty;  // Track the current difficulty
+    hintsUsed = 0;  // Reset hints counter
     const clues = DIFFICULTY_CLUES[difficulty];
     
     showLoadingOverlay(true);
@@ -312,7 +432,10 @@ async function checkSolution() {
     if (incorrect.size === 0) {
       const timeElapsed = stopTimer();
       const timeString = formatTime(timeElapsed);
-      showSuccessMessage(`🎉 Congratulations! You solved it in ${timeString}!`);
+      
+      // Show success message with score saving
+      const scoreMessage = `🎉 Congratulations! You solved it in ${timeString} with ${hintsUsed} hints!`;
+      showSuccessMessageWithScoreSave(scoreMessage, timeElapsed, currentDifficulty, hintsUsed);
     } else {
       showErrorMessage(`${incorrect.size} cell(s) are incorrect.`);
     }
@@ -358,6 +481,8 @@ async function getHint() {
     cellInput.disabled = true;
     cellInput.className = 'sudoku-cell hint';
     
+    hintsUsed++;  // Increment hints counter
+    
     showSuccessMessage('💡 Hint provided! Cell filled with the correct value.');
   } catch (error) {
     showErrorMessage(`Error: ${error.message}`);
@@ -394,6 +519,57 @@ function showSuccessMessage(message) {
   }
 }
 
+/**
+ * Show success message and prompt for name to save score to Top 10.
+ * 
+ * Args:
+ *     message: The congratulation message to display.
+ *     time: Time taken in seconds.
+ *     difficulty: The difficulty level.
+ *     hints: Number of hints used.
+ */
+function showSuccessMessageWithScoreSave(message, time, difficulty, hints) {
+  const container = document.getElementById('message-container');
+  if (container) {
+    container.innerHTML = `
+      <div class="message message-success">
+        <p>${escapeHtml(message)}</p>
+        <div class="score-save-prompt">
+          <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+          <button id="save-score-btn">Save Score</button>
+          <button id="skip-save-btn">Skip</button>
+        </div>
+      </div>
+    `;
+    
+    const saveBtn = document.getElementById('save-score-btn');
+    const skipBtn = document.getElementById('skip-save-btn');
+    const nameInput = document.getElementById('player-name');
+    
+    saveBtn.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      if (!name) {
+        alert('Please enter a name');
+        return;
+      }
+      
+      const rank = saveScore(name, time, difficulty, hints);
+      displayTopScores();
+      
+      if (rank > 0 && rank <= 10) {
+        showSuccessMessage(`✨ Your score has been saved! You placed #${rank} in the Top 10!`);
+      }
+    });
+    
+    skipBtn.addEventListener('click', () => {
+      clearMessage();
+    });
+    
+    // Set focus to input for better UX
+    nameInput.focus();
+  }
+}
+
 function clearMessage() {
   const container = document.getElementById('message-container');
   if (container) {
@@ -418,6 +594,9 @@ window.addEventListener('load', () => {
   if (difficultySelect) {
     difficultySelect.addEventListener('change', newGame);
   }
+  
+  // Display Top 10 scores
+  displayTopScores();
   
   // Initialize
   newGame();
