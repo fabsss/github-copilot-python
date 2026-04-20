@@ -85,11 +85,19 @@ h1 {
     color: #333;
 }
 
-.difficulty-selector {
-    margin: 20px auto;
+.game-info {
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 40px;
+    margin: 20px auto;
+    max-width: 800px;
+    flex-wrap: wrap;
+}
+
+.difficulty-selector {
+    display: flex;
+    align-items: center;
     gap: 12px;
 }
 
@@ -117,6 +125,21 @@ h1 {
 
 .difficulty-selector select:hover {
     border-color: #1565c0;
+}
+
+.timer-display {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1976d2;
+    padding: 8px 16px;
+    background: #e3f2fd;
+    border-radius: 4px;
+    min-width: 100px;
+    font-family: 'Courier New', monospace;
+}
+
+#timer {
+    display: inline-block;
 }
 
 #sudoku-board {
@@ -199,38 +222,4 @@ button {
 
 button:hover {
     background: #1565c0;
-}
-
-.difficulty-selector {
-    margin: 20px auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-}
-
-.difficulty-selector label {
-    font-weight: bold;
-    color: #333;
-}
-
-.difficulty-selector select {
-    padding: 8px 12px;
-    font-size: 16px;
-    border: 2px solid #1976d2;
-    background: #fff;
-    color: #333;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: border-color 0.2s;
-}
-
-.difficulty-selector select:focus {
-    outline: none;
-    border-color: #1565c0;
-    box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
-}
-
-.difficulty-selector select:hover {
-    border-color: #1565c0;
 }

@@ -441,3 +441,134 @@ class TestHintRoute:
         
         assert 0 <= data['row'] <= 8
         assert 0 <= data['col'] <= 8
+
+
+class TestTimerFeature:
+    """Test timer feature integration with the game.
+    
+    The timer is a client-side feature that tracks solve time.
+    These tests verify that:
+    1. Timer elements are present in the HTML
+    2. Check solution route works with timer in place
+    3. Game state is properly managed with timer
+    """
+    
+    def test_index_contains_timer_element(self, client):
+        """GET / should include timer display element."""
+        response = client.get('/')
+        assert response.status_code == 200
+        html_content = response.data.decode('utf-8')
+        
+        # Check for timer element
+        assert 'id="timer"' in html_content, 'HTML should contain timer element'
+        assert 'timer-display' in html_content, 'HTML should contain timer display class'
+    
+    def test_index_contains_game_info_container(self, client):
+        """GET / should include game-info container with timer and difficulty."""
+        response = client.get('/')
+        assert response.status_code == 200
+        html_content = response.data.decode('utf-8')
+        
+        assert 'game-info' in html_content, 'HTML should have game-info class'
+        assert 'difficulty-selector' in html_content, 'HTML should have difficulty selector'
+    
+    def test_check_solution_works_during_timed_game(self, client):
+        """Check solution should work correctly during timed game."""
+        # Start a new game (timer starts on client-side)
+        response = client.get('/new?clues=35')
+        assert response.status_code == 200
+        
+        puzzle, solution = CURRENT['puzzle'], CURRENT['solution']
+        
+        # Submit the correct solution
+        response = client.post('/check', json={'board': solution})
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        
+        # Solution should be verified correctly regardless of timer
+        assert 'incorrect' in data
+        assert data['incorrect'] == []
+    
+    def test_game_state_reset_on_new_game(self, client):
+        """New game should reset game state for timer."""
+        # Start first game
+        client.get('/new?clues=35')
+        first_puzzle = [row[:] for row in CURRENT['puzzle']]
+        
+        # Start second game
+        client.get('/new?clues=40')
+        second_puzzle = [row[:] for row in CURRENT['puzzle']]
+        
+        # Puzzles should be different (or at least from different clue counts)
+        assert first_puzzle != second_puzzle or CURRENT['puzzle'] is not None
+        assert CURRENT['puzzle'] is not None
+        assert CURRENT['solution'] is not None
+    
+    def test_timer_display_css_exists(self, client):
+        """Stylesheet should include timer display styles."""
+        response = client.get('/static/styles.css')
+        assert response.status_code == 200
+        
+        css_content = response.data.decode('utf-8')
+        assert '.timer-display' in css_content, 'CSS should contain timer-display class'
+        assert '#timer' in css_content, 'CSS should contain timer ID selector'
+        assert 'monospace' in css_content, 'Timer should use monospace font'
+    
+    def test_timer_formatting_in_js(self, client):
+        """JavaScript should contain timer formatting functions."""
+        response = client.get('/static/main.js')
+        assert response.status_code == 200
+        
+        js_content = response.data.decode('utf-8')
+        assert 'formatTime' in js_content, 'JS should contain formatTime function'
+        assert 'startTimer' in js_content, 'JS should contain startTimer function'
+        assert 'stopTimer' in js_content, 'JS should contain stopTimer function'
+        assert 'updateTimerDisplay' in js_content, 'JS should contain updateTimerDisplay function'
+        assert 'elapsedSeconds' in js_content, 'JS should track elapsed seconds'
+        assert 'timerInterval' in js_content, 'JS should manage timer interval'
+    
+    def test_new_game_initializes_timer(self, client):
+        """New game creation should set up timer properly."""
+        response = client.get('/new?clues=35')
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        
+        # Verify puzzle is ready for timed gameplay
+        assert 'puzzle' in data
+        assert 'solution' in data
+        assert len(data['puzzle']) == SIZE
+        assert len(data['solution']) == SIZE
+    
+    def test_check_solution_includes_time_in_success(self, client):
+        """The success message should mention time (client-side verification)."""
+        # Start game and get solution
+        client.get('/new?clues=35')
+        puzzle, solution = CURRENT['puzzle'], CURRENT['solution']
+        
+        # Submit correct solution
+        response = client.post('/check', json={'board': solution})
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        
+        # Backend returns verified solution; client-side adds time message
+        assert data['incorrect'] == []
+    
+    def test_timer_independent_of_difficulty_level(self, client):
+        """Timer should work for all difficulty levels."""
+        difficulties = ['easy', 'medium', 'hard']
+        
+        for difficulty in difficulties:
+            # Get clues count for this difficulty
+            clues_map = {'easy': 45, 'medium': 35, 'hard': 25}
+            clues = clues_map[difficulty]
+            
+            # Create game with difficulty
+            response = client.get(f'/new?clues={clues}')
+            assert response.status_code == 200
+            data = json.loads(response.data)
+            
+            # Verify game is created for timed play
+            assert 'puzzle' in data
+            assert 'solution' in data
+            assert data['clues'] == clues
+

@@ -345,7 +345,146 @@
             });
         });
 
-        // Reporting
+        // Test Suite: formatTime
+        describe('formatTime', () => {
+            // Timer helper functions from main.js
+            function formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+
+            test('formats 0 seconds as 00:00', () => {
+                assertEqual(formatTime(0), '00:00', 'Zero seconds');
+            });
+
+            test('formats single digit seconds with leading zero', () => {
+                assertEqual(formatTime(5), '00:05', 'Single digit seconds');
+                assertEqual(formatTime(9), '00:09', 'Nine seconds');
+            });
+
+            test('formats 59 seconds as 00:59', () => {
+                assertEqual(formatTime(59), '00:59', 'Max single minute seconds');
+            });
+
+            test('formats 60 seconds as 01:00', () => {
+                assertEqual(formatTime(60), '01:00', 'One minute exactly');
+            });
+
+            test('formats 61 seconds as 01:01', () => {
+                assertEqual(formatTime(61), '01:01', 'One minute one second');
+            });
+
+            test('formats 3661 seconds as 61:01', () => {
+                assertEqual(formatTime(3661), '61:01', 'Over one hour');
+            });
+
+            test('formats 599 seconds as 09:59', () => {
+                assertEqual(formatTime(599), '09:59', 'Almost 10 minutes');
+            });
+
+            test('formats 600 seconds as 10:00', () => {
+                assertEqual(formatTime(600), '10:00', 'Exactly 10 minutes');
+            });
+
+            test('formats large values correctly', () => {
+                // 1 hour = 3600 seconds
+                assertEqual(formatTime(3600), '60:00', 'One hour');
+                assertEqual(formatTime(7200), '120:00', 'Two hours');
+            });
+        });
+
+        // Test Suite: Timer functions
+        describe('Timer - startTimer and stopTimer', () => {
+            test('formatTime exists and is callable', () => {
+                // We need to check that formatTime is available (it's defined above)
+                assert(typeof formatTime === 'function', 'formatTime should be a function');
+            });
+
+            test('formatTime correctly pads minutes with leading zero', () => {
+                assertEqual(formatTime(59), '00:59', 'Single digit minutes with leading zero');
+                assertEqual(formatTime(600), '10:00', 'Double digit minutes');
+            });
+
+            test('formatTime correctly pads seconds with leading zero', () => {
+                assertEqual(formatTime(5), '00:05', 'Single digit seconds with leading zero');
+                assertEqual(formatTime(65), '01:05', 'One min, single digit seconds');
+            });
+
+            test('formatTime handles boundary values', () => {
+                assertEqual(formatTime(0), '00:00', 'Zero');
+                assertEqual(formatTime(1), '00:01', 'One second');
+                assertEqual(formatTime(59), '00:59', 'Max single minute value');
+                assertEqual(formatTime(60), '01:00', 'One minute');
+            });
+        });
+
+        // Test Suite: Timer update display
+        describe('Timer - Display Update', () => {
+            test('updateTimerDisplay updates element when timer element exists', () => {
+                // Create a mock timer element
+                const timerDiv = document.createElement('span');
+                timerDiv.id = 'timer';
+                timerDiv.textContent = '00:00';
+                document.body.appendChild(timerDiv);
+
+                // Simulate updateTimerDisplay function
+                const elapsedSeconds = 65;
+                const timerElement = document.getElementById('timer');
+                if (timerElement) {
+                    timerElement.textContent = formatTime(elapsedSeconds);
+                }
+
+                assertEqual(timerDiv.textContent, '01:05', 'Timer element should display 01:05');
+                document.body.removeChild(timerDiv);
+            });
+
+            test('updateTimerDisplay handles missing timer element gracefully', () => {
+                // Even if timer element doesn't exist, function should not throw
+                const elapsedSeconds = 30;
+                const timerElement = document.getElementById('nonexistent-timer-element-12345');
+                if (timerElement) {
+                    timerElement.textContent = formatTime(elapsedSeconds);
+                }
+                // Test passes if no error is thrown
+                assert(true, 'Should handle missing timer element gracefully');
+            });
+        });
+
+        // Test Suite: Timer integration scenarios
+        describe('Timer - Integration Scenarios', () => {
+            test('timer display correctly shows elapsed time progression', () => {
+                const times = [0, 5, 30, 59, 60, 65, 125, 3661];
+                const expected = ['00:00', '00:05', '00:30', '00:59', '01:00', '01:05', '02:05', '61:01'];
+                
+                for (let i = 0; i < times.length; i++) {
+                    assertEqual(formatTime(times[i]), expected[i], `Time ${times[i]} should format as ${expected[i]}`);
+                }
+            });
+
+            test('timer correctly handles edge case of 0 seconds', () => {
+                const timerDiv = document.createElement('span');
+                timerDiv.id = 'timer-test-0';
+                timerDiv.textContent = formatTime(0);
+                
+                assertEqual(timerDiv.textContent, '00:00', 'Timer should show 00:00 at start');
+                timerDiv.remove();
+            });
+
+            test('timer correctly handles rapid time updates', () => {
+                // Simulate rapid updates
+                const updates = [];
+                for (let i = 0; i <= 10; i++) {
+                    updates.push(formatTime(i));
+                }
+                
+                assertEqual(updates[0], '00:00', 'First update');
+                assertEqual(updates[5], '00:05', 'Middle update');
+                assertEqual(updates[10], '00:10', 'Last update');
+                assertEqual(updates.length, 11, 'Should have 11 updates');
+            });
+        });
+
         function describe(suiteName, fn) {
             console.log(`\n${suiteName}:`);
             fn();

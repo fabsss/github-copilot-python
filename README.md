@@ -63,6 +63,24 @@ The game provides immediate visual feedback when users enter numbers that violat
 - CSS classes: `.invalid` (orange background), `.conflict` (orange border)
 - No server roundtrip needed - provides seamless, responsive user experience
 
+### Game Timer
+Tracks how long it takes to solve the puzzle and displays the elapsed time in the success message.
+
+**How it works:**
+- Timer starts automatically when a new puzzle is generated
+- Timer displays in **MM:SS format** (minutes:seconds) in the top-right corner
+- Timer updates every second during gameplay
+- When the puzzle is solved correctly, the timer stops and displays the total time taken
+- Success message shows: "🎉 Congratulations! You solved it in MM:SS!"
+- Timer resets when a new game is started
+
+**Technical Implementation:**
+- Client-side timer in [main.js](starter/static/main.js)
+- Functions: `startTimer()`, `stopTimer()`, `updateTimerDisplay()`, `formatTime()`
+- Timer display styled in [styles.css](starter/static/styles.css) with `.timer-display` and `#timer` classes
+- Responsive design: timer displays next to difficulty selector on larger screens, wraps on mobile
+- Monospace font (`Courier New`) for precise time display
+
 ## Testing
 
 This project includes a comprehensive test suite using **pytest** and browser-based unit tests to ensure code quality and functionality.
@@ -80,17 +98,16 @@ pytest -v tests/test_sudoku_logic.py::TestIsValidMove  # Run specific test class
 
 ### Browser-Based Tests
 
-Open the invalid move detection test suite in your browser:
+Open the client-side features test suite in your browser:
 
 ```bash
 # Open in browser
-starter/tests/test_invalid_move_detection.html
+starter/tests/test_client_side_features.html
 ```
 
-This HTML test file contains **27 unit tests** for the real-time validation logic, including:
-- Sector row/column calculation tests
-- Row, column, and sector conflict detection tests
-- Edge cases and deduplication tests
+This HTML test file contains **40 unit tests** for client-side game features, including:
+- **Invalid Move Detection (22 tests):** Sector row/column calculation, row/column/sector conflict detection, edge cases, and deduplication
+- **Timer Functionality (18 tests):** Time formatting, display updates, and integration scenarios
 - All tests execute in the browser console
 
 ### Test Coverage
@@ -119,7 +136,9 @@ tests/
 │   ├── TestNewGameErrorHandling         # Error handling tests
 │   └── TestInvalidMoveDetection         # Invalid move detection integration tests (5 tests)
 ├── test_sudoku_logic.py                 # Game logic unit tests (35 tests)
-└── test_invalid_move_detection.html     # Browser-based unit tests (27 tests)
+├── test_client_side_features.html      # Browser-based unit tests (40 tests)
+│   ├── Invalid move detection (22 tests)
+│   └── Timer functionality (18 tests)
 ```
 
 ### What's Tested

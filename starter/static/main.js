@@ -8,6 +8,62 @@ const DIFFICULTY_CLUES = {
   hard: 25
 };
 
+// Timer state
+let timerInterval = null;
+let elapsedSeconds = 0;
+
+/**
+ * Format elapsed seconds into MM:SS format.
+ * 
+ * Args:
+ *     seconds: The number of elapsed seconds.
+ * 
+ * Returns:
+ *     A string in MM:SS format.
+ */
+function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+/**
+ * Start the game timer and update display every second.
+ */
+function startTimer() {
+  elapsedSeconds = 0;
+  updateTimerDisplay();
+  
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    updateTimerDisplay();
+  }, 1000);
+}
+
+/**
+ * Update the timer display with the current elapsed time.
+ */
+function updateTimerDisplay() {
+  const timerElement = document.getElementById('timer');
+  if (timerElement) {
+    timerElement.textContent = formatTime(elapsedSeconds);
+  }
+}
+
+/**
+ * Stop the game timer and return the elapsed time.
+ * 
+ * Returns:
+ *     The number of elapsed seconds.
+ */
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  return elapsedSeconds;
+}
+
 /**
  * Get the top-left corner row of the 3x3 sector for a given cell.
  * 
@@ -183,6 +239,7 @@ async function newGame() {
     
     showLoadingOverlay(true);
     clearMessage();
+    stopTimer();
     
     const response = await fetch(`/new?clues=${clues}`);
     const data = await response.json();
@@ -209,6 +266,7 @@ async function newGame() {
     }
     
     renderPuzzle(data.puzzle);
+    startTimer();
     showLoadingOverlay(false);
   } catch (error) {
     showLoadingOverlay(false);
@@ -252,7 +310,9 @@ async function checkSolution() {
       }
     }
     if (incorrect.size === 0) {
-      showSuccessMessage('🎉 Congratulations! You solved it!');
+      const timeElapsed = stopTimer();
+      const timeString = formatTime(timeElapsed);
+      showSuccessMessage(`🎉 Congratulations! You solved it in ${timeString}!`);
     } else {
       showErrorMessage(`${incorrect.size} cell(s) are incorrect.`);
     }
