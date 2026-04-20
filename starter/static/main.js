@@ -1,11 +1,129 @@
 // Client-side rendering and interaction for the Flask-backed Sudoku
 const SIZE = 9;
+const SECTOR_SIZE = 3;
 let puzzle = [];
 const DIFFICULTY_CLUES = {
   easy: 45,
   medium: 35,
   hard: 25
 };
+
+/**
+ * Get the top-left corner row of the 3x3 sector for a given cell.
+ * 
+ * Args:
+ *     row: The row index of the cell.
+ * 
+ * Returns:
+ *     The top-left corner row index of the sector.
+ */
+function getSectorRow(row) {
+  return Math.floor(row / SECTOR_SIZE) * SECTOR_SIZE;
+}
+
+/**
+ * Get the top-left corner column of the 3x3 sector for a given cell.
+ * 
+ * Args:
+ *     col: The column index of the cell.
+ * 
+ * Returns:
+ *     The top-left corner column index of the sector.
+ */
+function getSectorCol(col) {
+  return Math.floor(col / SECTOR_SIZE) * SECTOR_SIZE;
+}
+
+/**
+ * Find all cells that conflict with a given value in the same row, column, or sector.
+ * 
+ * Args:
+ *     row: The row index of the cell being checked.
+ *     col: The column index of the cell being checked.
+ *     value: The value to check for conflicts.
+ *     inputs: The array of input elements.
+ * 
+ * Returns:
+ *     A Set of indices of conflicting cells.
+ */
+function findConflictingCells(row, col, value, inputs) {
+  const conflicts = new Set();
+  
+  if (!value || value === '') return conflicts;
+  
+  // Check row
+  for (let c = 0; c < SIZE; c++) {
+    if (c !== col) {
+      const idx = row * SIZE + c;
+      const cellValue = inputs[idx].value;
+      if (cellValue === value) {
+        conflicts.add(idx);
+      }
+    }
+  }
+  
+  // Check column
+  for (let r = 0; r < SIZE; r++) {
+    if (r !== row) {
+      const idx = r * SIZE + col;
+      const cellValue = inputs[idx].value;
+      if (cellValue === value) {
+        conflicts.add(idx);
+      }
+    }
+  }
+  
+  // Check 3x3 sector
+  const sectorRow = getSectorRow(row);
+  const sectorCol = getSectorCol(col);
+  for (let r = sectorRow; r < sectorRow + SECTOR_SIZE; r++) {
+    for (let c = sectorCol; c < sectorCol + SECTOR_SIZE; c++) {
+      if (r !== row || c !== col) {
+        const idx = r * SIZE + c;
+        const cellValue = inputs[idx].value;
+        if (cellValue === value) {
+          conflicts.add(idx);
+        }
+      }
+    }
+  }
+  
+  return conflicts;
+}
+
+/**
+ * Validate a cell entry and update visual feedback for conflicts.
+ * 
+ * Args:
+ *     cellInput: The input element of the cell being validated.
+ *     inputs: The array of all input elements on the board.
+ */
+function validateCellEntry(cellInput, inputs) {
+  const row = parseInt(cellInput.dataset.row, 10);
+  const col = parseInt(cellInput.dataset.col, 10);
+  const value = cellInput.value;
+  
+  // Remove conflicting classes from all cells
+  for (let i = 0; i < inputs.length; i++) {
+    inputs[i].classList.remove('invalid', 'conflict');
+  }
+  
+  // If cell is empty, no conflicts
+  if (value === '') return;
+  
+  // Find conflicting cells
+  const conflicts = findConflictingCells(row, col, value, inputs);
+  
+  if (conflicts.size > 0) {
+    // Mark current cell as invalid
+    cellInput.classList.add('invalid');
+    
+    // Mark conflicting cells with conflict border
+    for (const idx of conflicts) {
+      inputs[idx].classList.add('conflict');
+    }
+  }
+}
 
 function createBoardElement() {
   const boardDiv = document.getElementById('sudoku-board');
@@ -23,6 +141,11 @@ function createBoardElement() {
       input.addEventListener('input', (e) => {
         const val = e.target.value.replace(/[^1-9]/g, '');
         e.target.value = val;
+        
+        // Validate cell entry for conflicts
+        const boardDiv = document.getElementById('sudoku-board');
+        const inputs = boardDiv.getElementsByTagName('input');
+        validateCellEntry(e.target, inputs);
       });
       rowDiv.appendChild(input);
     }
@@ -43,10 +166,11 @@ function renderPuzzle(puz) {
       if (val !== 0) {
         inp.value = val;
         inp.disabled = true;
-        inp.className += ' prefilled';
+        inp.className = 'sudoku-cell prefilled';
       } else {
         inp.value = '';
         inp.disabled = false;
+        inp.className = 'sudoku-cell';
       }
     }
   }
