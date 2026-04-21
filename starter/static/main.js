@@ -19,13 +19,23 @@ const TOP_10_SCORES_KEY = 'sudoku_top_10_scores';
 const DARK_MODE_KEY = 'sudoku_dark_mode';
 
 /**
- * Initialize dark mode by loading saved preference.
+ * Initialize dark mode by loading saved preference or system preference.
+ * Priority: localStorage > system prefers-color-scheme > light mode
  * Called on page load to apply theme.
  */
 function initializeDarkMode() {
   try {
+    let isDarkMode = false;
+    
+    // Check localStorage first
     const savedDarkMode = localStorage.getItem(DARK_MODE_KEY);
-    const isDarkMode = savedDarkMode === 'true';
+    if (savedDarkMode !== null) {
+      isDarkMode = savedDarkMode === 'true';
+    } else {
+      // If no saved preference, check system preference
+      isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    
     applyDarkMode(isDarkMode);
   } catch (e) {
     // localStorage might not be available, default to light mode
