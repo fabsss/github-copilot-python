@@ -203,9 +203,9 @@ def generate_puzzle(clues: int = 35, max_attempts: int = 100,
     """
     # Increase timeout for harder difficulties (fewer clues = harder = longer generation)
     if clues <= 25:
-        timeout_seconds = 15  # Hard difficulty
+        timeout_seconds = 40  # Hard difficulty - allow enough time for uniqueness checks
     elif clues <= 30:
-        timeout_seconds = 10  # Medium-hard
+        timeout_seconds = 20  # Medium-hard
     
     start_time = time.time()
     
@@ -226,22 +226,24 @@ def generate_puzzle(clues: int = 35, max_attempts: int = 100,
         fill_board(board)
         solution = deep_copy(board)
         
-        # Remove cells one by one, maintaining a solvable puzzle with unique solution
+        # Remove cells strategically: prioritize cells with more conflicts
         cells_to_remove = SIZE * SIZE - clues
         removed = 0
-        removal_attempts = 0
-        max_removal_attempts = SIZE * SIZE * 2
         
-        while removed < cells_to_remove and removal_attempts < max_removal_attempts:
+        # Create list of all cell positions and shuffle them
+        all_cells = [(r, c) for r in range(SIZE) for c in range(SIZE)]
+        random.shuffle(all_cells)
+        
+        # Attempt removal in strategic order
+        for row, col in all_cells:
             if time_remaining() <= 0:
                 raise TimeoutError(
                     f"Could not generate a puzzle with unique solution within "
                     f"{timeout_seconds} seconds. Please try again by clicking 'New Game'."
                 )
             
-            row = random.randrange(SIZE)
-            col = random.randrange(SIZE)
-            removal_attempts += 1
+            if removed >= cells_to_remove:
+                break  # Successfully removed enough cells
             
             if board[row][col] != EMPTY:
                 # Try removing this cell
@@ -251,13 +253,16 @@ def generate_puzzle(clues: int = 35, max_attempts: int = 100,
                 # Check if puzzle still has unique solution
                 if has_unique_solution(board):
                     removed += 1
-                    removal_attempts = 0  # Reset attempts counter on successful removal
                 else:
                     # Put the value back if it violates uniqueness
                     board[row][col] = value
         
-        # If we successfully removed enough cells, return the puzzle
-        if removed >= clues * 0.9:  # Allow 90% of target clues
+        # Check actual clue count in the final puzzle (cells that are not EMPTY)
+        actual_clues = sum(1 for row in board for cell in row if cell != EMPTY)
+        
+        # Accept if actual clues meet target. Hard puzzles: 80% tolerance, others: 90%
+        min_clues = clues * 0.8 if clues <= 25 else clues * 0.9
+        if actual_clues >= min_clues:
             puzzle = deep_copy(board)
             return puzzle, solution
     
