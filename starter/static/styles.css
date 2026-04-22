@@ -96,7 +96,7 @@ body[data-theme="dark"] {
 
 /* Fallback for system dark mode preference (prefers-color-scheme) */
 @media (prefers-color-scheme: dark) {
-    body:not([data-theme="light"]) {
+    body:not([data-theme]) {
         --bg-primary: #121212;
         --bg-secondary: #1e1e1e;
         --text-primary: #f0f0f0;
